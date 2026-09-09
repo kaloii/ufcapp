@@ -12,7 +12,7 @@ export async function searchFighters(query: string): Promise<Fighter[]> {
   if (cached) return cached;
 
   const result = await apiFetch<{ data: { fighters: Fighter[] } }>(
-    `/ufc/search?q=${encodeURIComponent(query)}`,
+    `/search?q=${encodeURIComponent(query)}`,
   );
   const fighters = result.data?.fighters || [];
   setCachedData(cacheKey, fighters);
@@ -28,7 +28,7 @@ export async function getFighterBySlug(slug: string): Promise<Fighter> {
   if (cached) return cached;
 
   const result = await apiFetch<{ data: Fighter }>(
-    `/ufc/fighters/${encodeURIComponent(slug)}`,
+    `/fighters/${encodeURIComponent(slug)}`,
   );
   const fighter = result.data;
   setCachedData(cacheKey, fighter);
@@ -44,7 +44,7 @@ export async function getFighterStats(slug: string): Promise<FighterStats> {
   if (cached) return cached;
 
   const result = await apiFetch<{ data: FighterStats }>(
-    `/ufc/fighters/${encodeURIComponent(slug)}/stats`,
+    `/fighters/${encodeURIComponent(slug)}/stats`,
   );
   const stats = result.data;
   setCachedData(cacheKey, stats);
@@ -60,7 +60,7 @@ export async function getFighterFights(slug: string): Promise<Fight[]> {
   if (cached) return cached;
 
   const result = await apiFetch<{ data: Fight[] }>(
-    `/ufc/fighters/${encodeURIComponent(slug)}/fights`,
+    `/fighters/${encodeURIComponent(slug)}/fights`,
   );
   const fights = result.data || [];
   setCachedData(cacheKey, fights);
@@ -75,7 +75,7 @@ export async function getFighters(): Promise<Fighter[]> {
   );
   if (cached) return cached;
 
-  const result = await apiFetch<{ data: Fighter[] }>(`/ufc/fighters?page=1&limit=200`);
+    const result = await apiFetch<{ data: Fighter[] }>(`/fighters?page=1&limit=200`);
   const fighters = result.data || [];
   setCachedData(cacheKey, fighters);
   return fighters;

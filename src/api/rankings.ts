@@ -14,7 +14,7 @@ export async function getRankings(): Promise<Ranking[]> {
   );
   if (cached) return cached;
 
-  const result = await apiFetch<{ data: Ranking[] }>('/ufc/rankings');
+  const result = await apiFetch<{ data: Ranking[] }>('/rankings');
   const rankings = result.data || [];
   setCachedData(cacheKey, rankings);
   return rankings;
