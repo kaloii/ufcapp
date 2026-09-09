@@ -41,13 +41,15 @@ export function Navbar() {
             </Link>
           </div>
 
-          <form onSubmit={handleSearch} className="flex items-center">
+          <form onSubmit={handleSearch} className="flex items-center" role="search">
+            <label htmlFor="nav-search" className="sr-only">Search fighters</label>
             <input
-              type="text"
-              placeholder="Search fighters..."
+              id="nav-search"
+              type="search"
+              placeholder="Search fighters…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-bg-card border border-border rounded-lg px-4 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary w-48 md:w-64"
+              className="bg-bg-card border border-border rounded-lg px-4 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary w-48 md:w-64"
             />
           </form>
         </div>

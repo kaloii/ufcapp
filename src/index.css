@@ -12,13 +12,35 @@
   --color-text-muted: #737373;
   --color-accent-green: #22c55e;
   --color-accent-red: #ef4444;
+  --color-shadow-red: rgba(210, 10, 10, 0.4);
+  --color-shadow-red-lg: rgba(210, 10, 10, 0.6);
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
   @apply bg-bg-dark text-text-primary;
   font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   @apply border-border;
+}
+
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 0 20px var(--color-shadow-red), 0 0 40px var(--color-shadow-red);
+  transform: translateY(-2px);
+}
+
+.card-hover-focus:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 20px var(--color-shadow-red);
+  outline: none;
 }

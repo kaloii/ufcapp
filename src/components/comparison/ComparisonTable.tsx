@@ -91,25 +91,57 @@ export function ComparisonTable({
 
   return (
     <div className="bg-bg-card border border-border rounded-lg overflow-hidden">
-      <div className="grid grid-cols-3 gap-4 p-4 border-b border-border">
-        <div className="text-right">
-          <div className="font-semibold text-text-primary">{fighter1.name}</div>
+      <div className="grid grid-cols-3 gap-4 p-6 border-b border-border items-center">
+        <div className="flex items-center justify-end gap-3">
+          <div className="text-right">
+            <div className="font-semibold text-text-primary">{fighter1.name}</div>
+            <div className="text-text-muted text-sm">{fighter1.division}</div>
+          </div>
+          <div className="w-16 h-16 rounded-full bg-border overflow-hidden flex-shrink-0">
+            {fighter1.imageUrl ? (
+              <img
+                src={fighter1.imageUrl}
+                alt={fighter1.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-text-muted text-xl font-bold">
+                {fighter1.firstName?.[0]}{fighter1.lastName?.[0]}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="text-center text-text-muted text-sm">VS</div>
-        <div className="text-left">
-          <div className="font-semibold text-text-primary">{fighter2.name}</div>
+        <div className="text-center text-text-muted text-sm font-semibold">VS</div>
+        <div className="flex items-center gap-3">
+          <div className="w-16 h-16 rounded-full bg-border overflow-hidden flex-shrink-0">
+            {fighter2.imageUrl ? (
+              <img
+                src={fighter2.imageUrl}
+                alt={fighter2.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-text-muted text-xl font-bold">
+                {fighter2.firstName?.[0]}{fighter2.lastName?.[0]}
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="font-semibold text-text-primary">{fighter2.name}</div>
+            <div className="text-text-muted text-sm">{fighter2.division}</div>
+          </div>
         </div>
       </div>
       <div className="divide-y divide-border">
         {comparisons.map((comp) => (
-          <div key={comp.label} className="grid grid-cols-3 gap-4 px-4 py-3">
-            <div className="text-right font-medium text-text-primary">
+          <div key={comp.label} className="grid grid-cols-3 gap-4 px-6 py-3">
+            <div className="text-right font-medium text-text-primary font-variant-numeric tabular-nums">
               {comp.val1}
             </div>
             <div className="text-center text-text-muted text-sm">
               {comp.label}
             </div>
-            <div className="text-left font-medium text-text-primary">
+            <div className="text-left font-medium text-text-primary font-variant-numeric tabular-nums">
               {comp.val2}
             </div>
           </div>

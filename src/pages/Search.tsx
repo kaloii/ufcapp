@@ -12,13 +12,13 @@ export function Search() {
       <h1 className="text-3xl font-bold text-text-primary mb-2">Search</h1>
       {query && (
         <p className="text-text-secondary mb-8">
-          Results for "{query}"
+          Results for &ldquo;{query}&rdquo;
         </p>
       )}
 
       {loading && (
         <div className="text-center py-12">
-          <div className="text-text-muted">Searching...</div>
+          <div className="text-text-muted">Searching…</div>
         </div>
       )}
 

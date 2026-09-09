@@ -16,7 +16,7 @@ export function FighterProfile() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center py-12 text-text-muted">Loading...</div>
+        <div className="text-center py-12 text-text-muted">Loading…</div>
       </div>
     );
   }
@@ -46,6 +46,8 @@ export function FighterProfile() {
               src={fighter.imageUrl}
               alt={fighter.name}
               className="w-full h-full object-cover"
+              width={128}
+              height={128}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-muted text-3xl font-bold">
@@ -56,18 +58,18 @@ export function FighterProfile() {
         </div>
 
         <div className="flex-1">
-          <h1 className="text-4xl font-bold text-text-primary mb-1">
+          <h1 className="text-4xl font-bold text-text-primary mb-1" style={{ textWrap: 'balance' }}>
             {fighter.name}
           </h1>
           {fighter.nickname && (
             <p className="text-text-muted text-lg mb-4">
-              "{fighter.nickname}"
+              &ldquo;{fighter.nickname}&rdquo;
             </p>
           )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <div className="text-text-muted">Record</div>
-              <div className="text-text-primary font-semibold text-lg">
+              <div className="text-text-primary font-semibold text-lg font-variant-numeric tabular-nums">
                 {record.wins}-{record.losses}-{record.draws}
               </div>
             </div>

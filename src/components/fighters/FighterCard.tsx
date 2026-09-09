@@ -9,7 +9,7 @@ export function FighterCard({ fighter }: FighterCardProps) {
   return (
     <Link
       to={`/fighters/${fighter.slug}`}
-      className="block bg-bg-card border border-border rounded-lg p-4 hover:bg-bg-card-hover transition-colors"
+      className="block bg-bg-card border border-border rounded-lg p-4 card-hover card-hover-focus"
     >
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-border overflow-hidden flex-shrink-0">
@@ -18,6 +18,7 @@ export function FighterCard({ fighter }: FighterCardProps) {
               src={fighter.imageUrl}
               alt={fighter.name}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-muted text-xl font-bold">
@@ -32,11 +33,11 @@ export function FighterCard({ fighter }: FighterCardProps) {
           </h3>
           {fighter.nickname && (
             <p className="text-text-muted text-sm truncate">
-              "{fighter.nickname}"
+              &ldquo;{fighter.nickname}&rdquo;
             </p>
           )}
           <div className="flex items-center gap-3 mt-1 text-sm">
-            <span className="text-text-secondary">
+            <span className="text-text-secondary font-variant-numeric tabular-nums">
               {fighter.record?.wins ?? fighter.recordWins}-{fighter.record?.losses ?? fighter.recordLosses}-{fighter.record?.draws ?? fighter.recordDraws}
             </span>
             <span className="text-text-muted">|</span>

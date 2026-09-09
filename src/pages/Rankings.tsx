@@ -46,7 +46,7 @@ export function Rankings() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center py-12 text-text-muted">Loading rankings...</div>
+        <div className="text-center py-12 text-text-muted">Loading rankings…</div>
       </div>
     );
   }
@@ -63,10 +63,12 @@ export function Rankings() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-text-primary mb-8">Rankings</h1>
 
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex flex-wrap gap-2 mb-8" role="tablist" aria-label="Division selector">
         {DIVISIONS.map((div) => (
           <button
             key={div}
+            role="tab"
+            aria-selected={selected === div}
             onClick={() => setSelected(div)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selected === div
@@ -86,9 +88,9 @@ export function Rankings() {
           </h2>
           <Link
             to={`/fighters/${champion.fighterSlug}`}
-            className="flex items-center gap-4 bg-bg-card border border-primary/30 rounded-lg p-4 hover:bg-bg-card-hover transition-colors"
+            className="flex items-center gap-4 bg-bg-card border border-primary/30 rounded-lg p-4 card-hover card-hover-focus"
           >
-            <div className="w-12 h-12 rounded-full bg-border overflow-hidden flex-shrink-0">
+            <div className="w-14 h-14 rounded-full bg-border overflow-hidden flex-shrink-0">
               {champion.imageUrl ? (
                 <img
                   src={champion.imageUrl}
@@ -121,9 +123,9 @@ export function Rankings() {
               <Link
                 key={r.id}
                 to={`/fighters/${r.fighterSlug}`}
-                className="flex items-center gap-4 bg-bg-card border border-border rounded-lg p-4 hover:bg-bg-card-hover transition-colors"
+                className="flex items-center gap-4 bg-bg-card border border-border rounded-lg p-4 card-hover card-hover-focus"
               >
-                <div className="w-8 text-text-muted font-bold text-center">
+                <div className="w-8 text-text-muted font-bold text-center font-variant-numeric tabular-nums">
                   {r.rank}
                 </div>
                 <div className="w-10 h-10 rounded-full bg-border overflow-hidden flex-shrink-0">
@@ -132,6 +134,7 @@ export function Rankings() {
                       src={r.imageUrl}
                       alt={r.fighterName}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-muted text-sm font-bold">

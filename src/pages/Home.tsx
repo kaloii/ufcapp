@@ -9,7 +9,7 @@ export function Home() {
           UFC <span className="text-primary">Stats</span>
         </h1>
         <p className="text-text-secondary text-lg max-w-xl mx-auto">
-          Fighter profiles, fight statistics, rankings, and head-to-head comparisons.
+          Fighter profiles, fight statistics, rankings, &amp; head-to-head comparisons.
         </p>
       </div>
 
@@ -18,9 +18,9 @@ export function Home() {
       <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full px-4">
         <Link
           to="/rankings"
-          className="bg-bg-card border border-border rounded-lg p-6 hover:bg-bg-card-hover transition-colors text-center"
+          className="bg-bg-card border border-border rounded-lg p-6 card-hover card-hover-focus text-center"
         >
-          <div className="text-3xl mb-3">🏆</div>
+          <div className="text-3xl mb-3" aria-hidden="true">🏆</div>
           <h2 className="text-text-primary font-semibold mb-1">Rankings</h2>
           <p className="text-text-muted text-sm">
             Official UFC rankings by division
@@ -29,9 +29,9 @@ export function Home() {
 
         <Link
           to="/compare"
-          className="bg-bg-card border border-border rounded-lg p-6 hover:bg-bg-card-hover transition-colors text-center"
+          className="bg-bg-card border border-border rounded-lg p-6 card-hover card-hover-focus text-center"
         >
-          <div className="text-3xl mb-3">⚖️</div>
+          <div className="text-3xl mb-3" aria-hidden="true">⚖️</div>
           <h2 className="text-text-primary font-semibold mb-1">Compare</h2>
           <p className="text-text-muted text-sm">
             Head-to-head fighter comparison
@@ -40,9 +40,9 @@ export function Home() {
 
         <Link
           to="/search?q="
-          className="bg-bg-card border border-border rounded-lg p-6 hover:bg-bg-card-hover transition-colors text-center"
+          className="bg-bg-card border border-border rounded-lg p-6 card-hover card-hover-focus text-center"
         >
-          <div className="text-3xl mb-3">🔍</div>
+          <div className="text-3xl mb-3" aria-hidden="true">🔍</div>
           <h2 className="text-text-primary font-semibold mb-1">Explore</h2>
           <p className="text-text-muted text-sm">
             Browse all UFC fighters

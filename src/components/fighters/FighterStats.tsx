@@ -87,13 +87,13 @@ interface StatCardProps {
 
 function StatCard({ title, stats }: StatCardProps) {
   return (
-    <div className="bg-bg-card border border-border rounded-lg p-4">
+    <div className="bg-bg-card border border-border rounded-lg p-4 card-hover">
       <h3 className="text-text-primary font-semibold mb-3">{title}</h3>
       <div className="space-y-2">
         {stats.map((stat) => (
           <div key={stat.label} className="flex justify-between text-sm">
             <span className="text-text-muted">{stat.label}</span>
-            <span className="text-text-primary font-medium">{stat.value}</span>
+            <span className="text-text-primary font-medium font-variant-numeric tabular-nums">{stat.value}</span>
           </div>
         ))}
       </div>
