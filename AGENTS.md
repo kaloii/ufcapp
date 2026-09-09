@@ -23,9 +23,10 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 - `noUnusedLocals: true` / `noUnusedParameters: true` — unused code causes build failure.
 
 ## API Key
-- Stored in `.env` as `VITE_UFC_API_KEY` (Vite prefix required for client-side exposure)
+- Stored in `.env` as `CITO_API_KEY` (server-side only, no `VITE_` prefix)
 - Get key from https://citoapi.com (free tier: 500 req/month)
-- Key is read via `import.meta.env.VITE_UFC_API_KEY` in `src/api/client.ts`
+- Key is read via `process.env.CITO_API_KEY` in `api/*.ts` serverless functions
+- On Vercel: set `CITO_API_KEY` in Project Settings → Environment Variables
 - `.env` is gitignored; never commit API keys
 
 ## API Response Shapes (Cito API)
@@ -50,8 +51,18 @@ The Cito API wraps all responses in `{ success: true, data: ... }`. Key structur
 
 ## Project Structure
 ```
+api/                # Vercel serverless functions (CORS proxy to Cito API)
+├── search.ts       # GET /api/search?q=...
+├── fighters.ts     # GET /api/fighters?page=...&limit=...
+├── fighters/
+│   ├── [slug].ts           # GET /api/fighters/:slug
+│   └── [slug]/
+│       ├── stats.ts        # GET /api/fighters/:slug/stats
+│       └── fights.ts       # GET /api/fighters/:slug/fights
+└── rankings.ts     # GET /api/rankings
+
 src/
-├── api/          # Cito API client functions (fighters, rankings)
+├── api/          # Frontend API client (calls /api proxy, not Cito directly)
 ├── cache/        # localStorage cache with TTL
 ├── components/
 │   ├── layout/   # Navbar, Footer

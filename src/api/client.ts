@@ -1,5 +1,4 @@
-const API_BASE = 'https://api.citoapi.com/api/v1';
-const API_KEY = import.meta.env.VITE_UFC_API_KEY || '';
+const API_BASE = '/api';
 
 export class ApiError extends Error {
   status: number;
@@ -16,7 +15,6 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   const headers = {
-    'x-api-key': API_KEY,
     'Content-Type': 'application/json',
     ...options?.headers,
   };
