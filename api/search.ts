@@ -26,7 +26,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
-    return res.status(200).json(data);
+    const result = data.data || data;
+    return res.status(200).json({
+      fighters: result.fighters || [],
+      bouts: result.bouts || [],
+    });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
   }

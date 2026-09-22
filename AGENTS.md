@@ -40,7 +40,20 @@ The Cito API wraps all responses in `{ success: true, data: ... }`. Key structur
 
 **Rankings** (`/ufc/rankings`): flat array of all rankings, filter by `normalizedDivision`. Champions have `isChampion: true` and `rankText: "C"`.
 
-**Search** (`/ufc/search?q=`): returns `{ data: { fighters: [...] } }`.
+**Search** (`/ufc/search?q=`): returns `{ data: { fighters: [...], bouts: [...], events: [...] } }`. IMPORTANT: The `bouts` array only returns data when the query uses **spaces** (e.g., `conor mcgregor`), NOT hyphens/slug format (`conor-mcgregor`). Slug-format queries return `fighters` but empty `bouts`. The `events` array is typically empty — use `get_upcoming_events` instead.
+
+**Fighter-specific endpoints** (more reliable than search for individual fighters):
+- `GET /ufc/fighters/{slug}` — Profile, record, stats overview. Slug must be lowercase hyphenated (e.g., `conor-mcgregor`).
+- `GET /ufc/fighters/{slug}/stats` — Detailed career stats (striking accuracy, takedown defense, win methods).
+- `GET /ufc/fighters/{slug}/fights` — Complete fight history (all bouts, opponents, methods, results).
+
+**n8n chatbot tool usage**:
+- `search_ufc` — Pass name with spaces (e.g., `conor mcgregor`) for discovery
+- `get_fighter` / `get_fighter_stats` / `get_fighter_fights` — Pass slug with hyphens (e.g., `conor-mcgregor`)
+- `get_rankings` / `get_upcoming_events` — No parameters needed
+- `get_rankings_by_division` — Pass division name lowercase (e.g., `welterweight`)
+- `get_event_bouts` — Pass event slug (e.g., `ufc-329`)
+- `get_bout_stats` — Pass bout ID string
 
 ## Caching
 - localStorage caching in `src/cache/localStorage.ts` to stay within free tier limits
@@ -59,7 +72,17 @@ api/                # Vercel serverless functions (CORS proxy to Cito API)
 │   └── [slug]/
 │       ├── stats.ts        # GET /api/fighters/:slug/stats
 │       └── fights.ts       # GET /api/fighters/:slug/fights
-└── rankings.ts     # GET /api/rankings
+├── rankings.ts     # GET /api/rankings
+├── rankings/
+│   └── [division].ts       # GET /api/rankings/:division
+├── events.ts       # GET /api/events?page=...&limit=...
+├── events/
+│   ├── upcoming.ts         # GET /api/events/upcoming
+│   └── [id]/
+│       └── bouts.ts        # GET /api/events/:id/bouts
+└── bouts/
+    └── [id]/
+        └── stats.ts        # GET /api/bouts/:id/stats
 
 src/
 ├── api/          # Frontend API client (calls /api proxy, not Cito directly)

@@ -8,15 +8,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { slug } = req.query;
-  if (!slug || typeof slug !== 'string') {
-    return res.status(400).json({ error: 'Missing slug parameter' });
+  const { id } = req.query;
+  if (!id || typeof id !== 'string') {
+    return res.status(400).json({ error: 'Missing id parameter' });
   }
 
-  const normalizedSlug = slug.toLowerCase().trim().replace(/\s+/g, '-');
-
   try {
-    const response = await fetch(`${API_BASE}/ufc/fighters/${encodeURIComponent(normalizedSlug)}/stats`, {
+    const response = await fetch(`${API_BASE}/ufc/events/${encodeURIComponent(id)}`, {
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
@@ -28,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
-    return res.status(200).json(data.data || data);
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
   }

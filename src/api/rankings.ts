@@ -19,3 +19,19 @@ export async function getRankings(): Promise<Ranking[]> {
   setCachedData(cacheKey, rankings);
   return rankings;
 }
+
+export async function getRankingsByDivision(division: string): Promise<Ranking[]> {
+  const cacheKey = `rankings_${division}`;
+  const cached = getCachedDataIfValid<Ranking[]>(
+    cacheKey,
+    CACHE_DURATIONS.RANKINGS,
+  );
+  if (cached) return cached;
+
+  const result = await apiFetch<{ data: Ranking[] }>(
+    `/rankings/${encodeURIComponent(division)}`,
+  );
+  const rankings = result.data || [];
+  setCachedData(cacheKey, rankings);
+  return rankings;
+}

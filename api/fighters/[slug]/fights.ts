@@ -13,8 +13,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing slug parameter' });
   }
 
+  const normalizedSlug = slug.toLowerCase().trim().replace(/\s+/g, '-');
+
   try {
-    const response = await fetch(`${API_BASE}/ufc/fighters/${encodeURIComponent(slug)}/fights`, {
+    const response = await fetch(`${API_BASE}/ufc/fighters/${encodeURIComponent(normalizedSlug)}/fights`, {
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
@@ -26,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
-    return res.status(200).json(data);
+    return res.status(200).json(data.data || data);
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
   }
