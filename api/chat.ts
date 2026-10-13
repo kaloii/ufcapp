@@ -440,42 +440,33 @@ function sanitizeHistory(raw: unknown): GeminiContent[] {
   });
 }
 
-async function callGeminiOnce(
-  model: string,
-  contents: GeminiContent[],
-): Promise<Rec> {
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch(geminiUrl(model), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        tools: [{ functionDeclarations: TOOLS }],
-        generationConfig: { maxOutputTokens: 1024 },
-      }),
-    });
+async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise<Rec> {
+  const res = await fetch(geminiUrl(model), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents,
+      tools: [{ functionDeclarations: TOOLS }],
+      generationConfig: { maxOutputTokens: 1024 },
+    }),
+  });
 
-    if (res.status === 429) {
-      return { rateLimited: true };
-    }
-    if (res.status === 503 && attempt < 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      continue;
-    }
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.error(`Gemini API error (${model})`, res.status, errText.slice(0, 500));
-      return {
-        error: `Gemini API error (${res.status})`,
-        retriable: res.status === 503 || res.status === 404 || res.status === 400,
-      };
-    }
-    return (await res.json()) as Rec;
+  if (res.status === 429) {
+    return { rateLimited: true };
   }
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error(`Gemini API error (${model})`, res.status, errText.slice(0, 500));
+    return {
+      error: `Gemini API error (${res.status})`,
+      retriable: res.status === 503 || res.status === 404 || res.status === 400,
+    };
+  }
+  return (await res.json()) as Rec;
 }
 
 let primaryCooldownUntil = 0;
@@ -483,26 +474,34 @@ let primaryCooldownUntil = 0;
 async function callGemini(contents: GeminiContent[]): Promise<Rec> {
   const hasFallback =
     Boolean(GEMINI_MODEL_FALLBACK) && GEMINI_MODEL_FALLBACK !== GEMINI_MODEL;
+  const models = hasFallback
+    ? [GEMINI_MODEL, GEMINI_MODEL_FALLBACK]
+    : [GEMINI_MODEL];
 
-  if (Date.now() >= primaryCooldownUntil) {
-    const primary = await callGeminiOnce(GEMINI_MODEL, contents);
-    if (!primary.error || primary.rateLimited) {
-      return primary;
-    }
-    if (primary.retriable) {
-      primaryCooldownUntil = Date.now() + 60_000;
-      if (hasFallback) {
-        console.error(`Falling back to ${GEMINI_MODEL_FALLBACK}`);
-        return callGeminiOnce(GEMINI_MODEL_FALLBACK, contents);
-      }
-    }
-    return primary;
-  }
+  let lastError: Rec = {};
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const cooling = Date.now() < primaryCooldownUntil;
+    const candidates = cooling && hasFallback
+      ? models.filter((m) => m !== GEMINI_MODEL)
+      : models;
+    const model = candidates[attempt % candidates.length];
 
-  if (hasFallback) {
-    return callGeminiOnce(GEMINI_MODEL_FALLBACK, contents);
+    const result = await callGeminiOnce(model, contents);
+    if (!result.error || result.rateLimited) {
+      return result;
+    }
+    lastError = result;
+    if (!result.retriable) {
+      return result;
+    }
+    if (model === GEMINI_MODEL) {
+      primaryCooldownUntil = Date.now() + 5 * 60_000;
+    }
+    if (attempt < 5) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
   }
-  return callGeminiOnce(GEMINI_MODEL, contents);
+  return lastError;
 }
 
 const rateBuckets = new Map<string, number[]>();
