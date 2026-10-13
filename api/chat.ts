@@ -4,7 +4,10 @@ const CITO_BASE = 'https://api.citoapi.com/api/v1';
 const CITO_API_KEY = process.env.CITO_API_KEY || '';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODEL_FALLBACK =
+  process.env.GEMINI_MODEL_FALLBACK || 'gemini-3.5-flash-lite';
+const geminiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 const MAX_TOOL_ROUNDS = 5;
 const MAX_INPUT_CHARS = 500;
@@ -427,9 +430,12 @@ function sanitizeHistory(raw: unknown): GeminiContent[] {
   });
 }
 
-async function callGemini(contents: GeminiContent[]): Promise<Rec> {
+async function callGeminiOnce(
+  model: string,
+  contents: GeminiContent[],
+): Promise<Rec> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(GEMINI_URL, {
+    const res = await fetch(geminiUrl(model), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -446,17 +452,36 @@ async function callGemini(contents: GeminiContent[]): Promise<Rec> {
     if (res.status === 429) {
       return { rateLimited: true };
     }
-    if (res.status === 503 && attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+    if (res.status === 503 && attempt < 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       continue;
     }
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      console.error('Gemini API error', res.status, errText.slice(0, 500));
-      return { error: `Gemini API error (${res.status})` };
+      console.error(`Gemini API error (${model})`, res.status, errText.slice(0, 500));
+      return {
+        error: `Gemini API error (${res.status})`,
+        retriable: res.status === 503 || res.status === 404,
+      };
     }
     return (await res.json()) as Rec;
   }
+}
+
+async function callGemini(contents: GeminiContent[]): Promise<Rec> {
+  const primary = await callGeminiOnce(GEMINI_MODEL, contents);
+  if (!primary.error || primary.rateLimited) {
+    return primary;
+  }
+  if (
+    primary.retriable &&
+    GEMINI_MODEL_FALLBACK &&
+    GEMINI_MODEL_FALLBACK !== GEMINI_MODEL
+  ) {
+    console.error(`Falling back to ${GEMINI_MODEL_FALLBACK}`);
+    return callGeminiOnce(GEMINI_MODEL_FALLBACK, contents);
+  }
+  return primary;
 }
 
 const rateBuckets = new Map<string, number[]>();

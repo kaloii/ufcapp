@@ -26,7 +26,8 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 ## API Keys
 - `CITO_API_KEY` — UFC data (free tier: 500 req/month). Get key from https://citoapi.com
 - `GEMINI_API_KEY` — chatbot LLM (free tier). Get key from https://aistudio.google.com (Google AI Studio → Create API key)
-- `GEMINI_MODEL` (optional) — overrides chatbot model, default `gemini-3.8-flash`
+- `GEMINI_MODEL` (optional) — overrides chatbot primary model, default `gemini-3.8-flash`
+- `GEMINI_MODEL_FALLBACK` (optional) — used when the primary returns 503/404, default `gemini-3.5-flash-lite` (the 3.8 free tier is often capacity-constrained; lite is the stable fallback)
 - Both are server-side only in `.env` (no `VITE_` prefix), read via `process.env` in `api/*.ts`
 - On Vercel: set in Project Settings → Environment Variables
 - `.env` is gitignored; never commit API keys
@@ -34,7 +35,7 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 ## Chatbot
 - `api/chat.ts` — serverless Gemini agent (replaces retired n8n workflow)
 - Contract: POST `{ chatInput, sessionId?, history? }` → `{ output }`; client is `src/hooks/useChat.ts` (default URL `/api/chat`, override via `VITE_CHAT_API_URL`)
-- Gemini `gemini-3.8-flash` tool-calling loop (max 5 rounds) over 9 Cito endpoints; tools call Cito directly with `CITO_API_KEY` and return slimmed payloads
+- Gemini tool-calling loop (max 5 rounds) over 9 Cito endpoints; primary `gemini-3.8-flash` with auto-fallback to `gemini-3.5-flash-lite` on 503/404; tools call Cito directly with `CITO_API_KEY` and return slimmed payloads
 - Memory: stateless — client passes last 10 messages as `history`
 - Guards: 500-char input cap, best-effort 10 req/5min per-IP rate limit; all failures return friendly `{ output }` text
 - The old n8n Cloud workflow JSON is retired (kept only in local Downloads)
