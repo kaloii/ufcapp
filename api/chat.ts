@@ -440,7 +440,19 @@ function sanitizeHistory(raw: unknown): GeminiContent[] {
   });
 }
 
+function stripThoughtSignatures(contents: GeminiContent[]): GeminiContent[] {
+  return contents.map((content) => ({
+    role: content.role,
+    parts: content.parts.map((part) => {
+      const fc = part.functionCall;
+      if (!fc) return part;
+      return { functionCall: { name: fc.name, args: fc.args } };
+    }),
+  }));
+}
+
 async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise<Rec> {
+  const bodyContents = model === GEMINI_MODEL ? contents : stripThoughtSignatures(contents);
   const res = await fetch(geminiUrl(model), {
     method: 'POST',
     headers: {
@@ -449,7 +461,7 @@ async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise
     },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents,
+      contents: bodyContents,
       tools: [{ functionDeclarations: TOOLS }],
       generationConfig: { maxOutputTokens: 1024 },
     }),
