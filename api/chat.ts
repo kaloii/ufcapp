@@ -472,7 +472,7 @@ async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise
 
 let primaryCooldownUntil = 0;
 
-async function callGemini(contents: GeminiContent[]): Promise<Rec> {
+async function callGemini(contents: GeminiContent[], budget: { left: number }): Promise<Rec> {
   const hasFallback =
     Boolean(GEMINI_MODEL_FALLBACK) && GEMINI_MODEL_FALLBACK !== GEMINI_MODEL;
   const models = hasFallback
@@ -481,6 +481,10 @@ async function callGemini(contents: GeminiContent[]): Promise<Rec> {
 
   let lastError: Rec = {};
   for (let attempt = 0; attempt < 6; attempt++) {
+    if (budget.left <= 0) {
+      return lastError.error ? lastError : { error: true, retriable: false };
+    }
+    budget.left -= 1;
     const cooling = Date.now() < primaryCooldownUntil;
     const candidates = cooling && hasFallback
       ? models.filter((m) => m !== GEMINI_MODEL)
@@ -556,9 +560,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...sanitizeHistory(body.history),
       { role: 'user', parts: [{ text: chatInput }] },
     ];
+    const geminiBudget = { left: 10 };
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const gemini = await callGemini(contents);
+      const gemini = await callGemini(contents, geminiBudget);
 
       if (gemini.rateLimited) {
         return res.status(200).json({

@@ -35,7 +35,7 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 ## Chatbot
 - `api/chat.ts` — serverless Gemini agent (replaces retired n8n workflow)
 - Contract: POST `{ chatInput, sessionId?, history? }` → `{ output }`; client is `src/hooks/useChat.ts` (default URL `/api/chat`, override via `VITE_CHAT_API_URL`)
-- Gemini tool-calling loop (max 5 rounds) over 9 Cito endpoints; primary `gemini-3.8-flash` with auto-fallback to `gemini-3.5-flash-lite` on 503/404/400 (up to 6 attempts × 2s backoff, 5min primary cooldown after a retriable failure), `thoughtSignature` preserved on echoed function calls; tools call Cito directly with `CITO_API_KEY` and return slimmed payloads
+- Gemini tool-calling loop (max 5 rounds) over 9 Cito endpoints; primary `gemini-3.8-flash` with auto-fallback to `gemini-3.5-flash-lite` on 503/404/400 (up to 6 attempts × 2s backoff, 5min primary cooldown after a retriable failure, 10 attempts per request budget), `thoughtSignature` preserved at Part level on echoed function calls; tools call Cito directly with `CITO_API_KEY` and return slimmed payloads
 - Memory: stateless — client passes last 10 messages as `history`
 - Guards: 500-char input cap, best-effort 10 req/5min per-IP rate limit; all failures return friendly `{ output }` text
 - The old n8n Cloud workflow JSON is retired (kept only in local Downloads)
