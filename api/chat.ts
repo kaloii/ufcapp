@@ -428,29 +428,35 @@ function sanitizeHistory(raw: unknown): GeminiContent[] {
 }
 
 async function callGemini(contents: GeminiContent[]): Promise<Rec> {
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': GEMINI_API_KEY,
-    },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents,
-      tools: [{ functionDeclarations: TOOLS }],
-      generationConfig: { maxOutputTokens: 1024 },
-    }),
-  });
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        tools: [{ functionDeclarations: TOOLS }],
+        generationConfig: { maxOutputTokens: 1024 },
+      }),
+    });
 
-  if (res.status === 429) {
-    return { rateLimited: true };
+    if (res.status === 429) {
+      return { rateLimited: true };
+    }
+    if (res.status === 503 && attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+      continue;
+    }
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error('Gemini API error', res.status, errText.slice(0, 500));
+      return { error: `Gemini API error (${res.status})` };
+    }
+    return (await res.json()) as Rec;
   }
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('Gemini API error', res.status, errText.slice(0, 500));
-    return { error: `Gemini API error (${res.status})` };
-  }
-  return (await res.json()) as Rec;
 }
 
 const rateBuckets = new Map<string, number[]>();
