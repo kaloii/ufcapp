@@ -21,9 +21,9 @@ export function useChat() {
     const trimmed = content.trim();
     if (!trimmed || isLoading) return;
 
-    const webhookUrl = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL;
-    if (!webhookUrl) {
-      setError('Chat is not configured. Missing webhook URL.');
+    const chatUrl = import.meta.env.VITE_CHAT_API_URL || '/api/chat';
+    if (!chatUrl) {
+      setError('Chat is not configured. Missing chat URL.');
       return;
     }
 
@@ -34,17 +34,23 @@ export function useChat() {
       timestamp: new Date(),
     };
 
+    const history = messages.slice(-10).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(webhookUrl, {
+      const response = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chatInput: trimmed,
           sessionId,
+          history,
         }),
       });
 
@@ -68,7 +74,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, sessionId]);
+  }, [isLoading, sessionId, messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

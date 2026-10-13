@@ -4,7 +4,7 @@ import {
   setCachedData,
   CACHE_DURATIONS,
 } from '../cache/localStorage';
-import type { Event } from '../types';
+import type { Bout, Event } from '../types';
 
 export async function getEvents(page = 1, limit = 50): Promise<Event[]> {
   const cacheKey = `events_${page}_${limit}`;
@@ -50,4 +50,20 @@ export async function getEventById(id: string): Promise<Event> {
   const event = result.data;
   setCachedData(cacheKey, event);
   return event;
+}
+
+export async function getEventBouts(slug: string): Promise<Bout[]> {
+  const cacheKey = `event_bouts_${slug}`;
+  const cached = getCachedDataIfValid<Bout[]>(
+    cacheKey,
+    CACHE_DURATIONS.EVENTS,
+  );
+  if (cached) return cached;
+
+  const result = await apiFetch<{ data: Bout[] }>(
+    `/events/${encodeURIComponent(slug)}/bouts`,
+  );
+  const bouts = result.data || [];
+  setCachedData(cacheKey, bouts);
+  return bouts;
 }

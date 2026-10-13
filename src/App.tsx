@@ -5,6 +5,7 @@ import { ChatWidget } from './components/chat/ChatWidget';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import { FighterProfile } from './pages/FighterProfile';
+import { EventDetail } from './pages/EventDetail';
 import { Rankings } from './pages/Rankings';
 import { Compare } from './pages/Compare';
 
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
             <Route path="/fighters/:slug" element={<FighterProfile />} />
+            <Route path="/events/:slug" element={<EventDetail />} />
             <Route path="/rankings" element={<Rankings />} />
             <Route path="/compare" element={<Compare />} />
           </Routes>

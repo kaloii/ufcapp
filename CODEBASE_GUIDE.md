@@ -33,6 +33,10 @@ These run server-side and proxy requests to Cito API. The API key is stored in `
 | `api/fighters/[slug]/stats.ts` | `GET /api/fighters/:slug/stats` | `/ufc/fighters/:slug/stats` |
 | `api/fighters/[slug]/fights.ts` | `GET /api/fighters/:slug/fights` | `/ufc/fighters/:slug/fights` |
 | `api/rankings.ts` | `GET /api/rankings` | `/ufc/rankings` |
+| `api/events.ts` | `GET /api/events?page=...&limit=...` | `/ufc/events?page=...&limit=...` |
+| `api/events/upcoming.ts` | `GET /api/events/upcoming` | `/ufc/events/upcoming` |
+| `api/events/[id].ts` | `GET /api/events/:id` | `/ufc/events/:id` |
+| `api/events/[id]/bouts.ts` | `GET /api/events/:id/bouts` | `/ufc/events/:id/bouts` |
 
 ### `src/api/fighters.ts` — Fighter Endpoints
 
@@ -43,6 +47,19 @@ These run server-side and proxy requests to Cito API. The API key is stored in `
 | `getFighterStats(slug)` | `/api/fighters/{slug}/stats` | `FighterStats` | permanent |
 | `getFighterFights(slug)` | `/api/fighters/{slug}/fights` | `Fight[]` | permanent |
 | `getFighters()` | `/api/fighters?page=1&limit=200` | `Fighter[]` | 24 h |
+
+### `src/api/search.ts` — Combined Search
+
+`searchAll(query)` → `/api/search?q=` returns `SearchResults` (`{ fighters, events, bouts }`, each capped at 5), cached 30 min under `searchall_{query}`. Used by the Search page; `searchFighters` remains for Compare autocomplete.
+
+### `src/api/events.ts` — Event Endpoints
+
+| Function | Endpoint | Returns | Cache TTL |
+|----------|----------|---------|-----------|
+| `getEvents(page, limit)` | `/api/events?page&limit` | `Event[]` | 12 h |
+| `getUpcomingEvents()` | `/api/events/upcoming` | `Event[]` | 12 h |
+| `getEventById(slug)` | `/api/events/{slug}` | `Event` | 12 h |
+| `getEventBouts(slug)` | `/api/events/{slug}/bouts` | `Bout[]` | 12 h |
 
 Every function follows the same pattern:
 

@@ -44,9 +44,10 @@ npm run lint # run OxLint
 │   ├── layout/       # Navbar, Footer <br>
 │   ├── fighters/     # FighterCard, FighterStats, SearchBar <br>
 │   ├── fights/       # FightCard <br>
+│   ├── events/       # EventCard, EventBoutRow <br>
 │   └── comparison/   # ComparisonTable <br>
-├── hooks/            # useFighter, useSearch, useRankings <br>
-├── pages/            # Home, Search, FighterProfile, Rankings, Compare <br>
+├── hooks/            # useFighter, useSearch, useRankings, useEvent <br>
+├── pages/            # Home, Search, FighterProfile, EventDetail, Rankings, Compare <br>
 └── types/            # TypeScript interfaces
 
 **Routes**
@@ -54,8 +55,9 @@ npm run lint # run OxLint
 | Route | Page |
 |------------|----------|
 |`/`|Home with search bar|
-|`/search?q=`|Search results|
+|`/search?q=`|Search results (fighters + events + bouts)|
 |`/fighters/:slug`|Fighter profile + stats + fight history|
+|`/events/:slug`|Event detail + fight card|
 |`/rankings`|Division rankings|
 |`/compare`|Side-by-side fighter comparison|
 

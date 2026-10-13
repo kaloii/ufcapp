@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import type { Fighter } from '../types';
-import { searchFighters } from '../api';
+import type { SearchResults } from '../types';
+import { searchAll } from '../api';
+
+const EMPTY: SearchResults = { fighters: [], events: [], bouts: [] };
 
 export function useSearch(query: string) {
   const [state, setState] = useState<{
-    results: Fighter[];
+    results: SearchResults;
     loading: boolean;
     error: string | null;
-  }>({ results: [], loading: false, error: null });
+  }>({ results: EMPTY, loading: false, error: null });
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -23,14 +25,14 @@ export function useSearch(query: string) {
       }
 
       try {
-        const fighters = await searchFighters(trimmed);
+        const results = await searchAll(trimmed);
         if (!cancelled) {
-          setState({ results: fighters, loading: false, error: null });
+          setState({ results, loading: false, error: null });
         }
       } catch (err) {
         if (!cancelled) {
           setState({
-            results: [],
+            results: EMPTY,
             loading: false,
             error: err instanceof Error ? err.message : 'Search failed',
           });

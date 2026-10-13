@@ -140,10 +140,53 @@ export interface Ranking {
 
 export interface Event {
   id: string;
-  name: string;
-  date: string;
-  location: string;
-  venue: string;
-  imageUrl: string;
-  fightCount: number;
+  slug: string;
+  title: string;
+  shortTitle: string | null;
+  status: string;
+  startsAt: string | null;
+  venue: string | null;
+  city: string | null;
+  country: string | null;
+  locationText: string | null;
+  imageUrl: string | null;
+  eventDate: string;
+  eventDateLabel: string;
+  hasStats: boolean;
+}
+
+export interface BoutFighter {
+  fighterSlug: string;
+  fighterName: string;
+  corner: string;
+  outcome: string;
+  championStatus: string;
+}
+
+export interface Bout {
+  id: string;
+  eventSlug: string;
+  cardSection: string;
+  weightClass: string;
+  titleBout: boolean;
+  status: string;
+  isCancelled: boolean;
+  winnerFighterSlug: string | null;
+  resultRound: number | null;
+  resultTime: string | null;
+  method: string | null;
+  event: {
+    slug: string;
+    title: string;
+    eventDate: string;
+    eventDateLabel: string;
+    locationText: string | null;
+  };
+  fighters: BoutFighter[];
+}
+
+export interface SearchResults {
+  fighters: Fighter[];
+  events: Event[];
+  bouts: Bout[];
 }

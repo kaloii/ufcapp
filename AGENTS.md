@@ -8,7 +8,7 @@
 - Deploy target: Vercel (SPA with client-side routing)
 
 ## Commands
-- `npm run dev` — Vite dev server at localhost:5173
+- `npm run dev` — Vite dev server at localhost:5173 (`/api/*` proxies to deployed Vercel via `API_PROXY_TARGET`, default `https://ufcapp-nine.vercel.app`)
 - `npm run build` — TypeScript check + Vite build (`tsc -b && vite build`)
 - `npm run lint` — OxLint (React + TypeScript + OXC plugins)
 
@@ -22,12 +22,21 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 - `verbatimModuleSyntax: true` — use `import type` for type-only imports.
 - `noUnusedLocals: true` / `noUnusedParameters: true` — unused code causes build failure.
 
-## API Key
-- Stored in `.env` as `CITO_API_KEY` (server-side only, no `VITE_` prefix)
-- Get key from https://citoapi.com (free tier: 500 req/month)
-- Key is read via `process.env.CITO_API_KEY` in `api/*.ts` serverless functions
-- On Vercel: set `CITO_API_KEY` in Project Settings → Environment Variables
+## API Keys
+- `CITO_API_KEY` — UFC data (free tier: 500 req/month). Get key from https://citoapi.com
+- `GEMINI_API_KEY` — chatbot LLM (free tier). Get key from https://aistudio.google.com (Google AI Studio → Create API key)
+- `GEMINI_MODEL` (optional) — overrides chatbot model, default `gemini-3.8-flash`
+- Both are server-side only in `.env` (no `VITE_` prefix), read via `process.env` in `api/*.ts`
+- On Vercel: set in Project Settings → Environment Variables
 - `.env` is gitignored; never commit API keys
+
+## Chatbot
+- `api/chat.ts` — serverless Gemini agent (replaces retired n8n workflow)
+- Contract: POST `{ chatInput, sessionId?, history? }` → `{ output }`; client is `src/hooks/useChat.ts` (default URL `/api/chat`, override via `VITE_CHAT_API_URL`)
+- Gemini `gemini-3.8-flash` tool-calling loop (max 5 rounds) over 9 Cito endpoints; tools call Cito directly with `CITO_API_KEY` and return slimmed payloads
+- Memory: stateless — client passes last 10 messages as `history`
+- Guards: 500-char input cap, best-effort 10 req/5min per-IP rate limit; all failures return friendly `{ output }` text
+- The old n8n Cloud workflow JSON is retired (kept only in local Downloads)
 
 ## API Response Shapes (Cito API)
 The Cito API wraps all responses in `{ success: true, data: ... }`. Key structures:
@@ -40,14 +49,16 @@ The Cito API wraps all responses in `{ success: true, data: ... }`. Key structur
 
 **Rankings** (`/ufc/rankings`): flat array of all rankings, filter by `normalizedDivision`. Champions have `isChampion: true` and `rankText: "C"`.
 
-**Search** (`/ufc/search?q=`): returns `{ data: { fighters: [...], bouts: [...], events: [...] } }`. IMPORTANT: The `bouts` array only returns data when the query uses **spaces** (e.g., `conor mcgregor`), NOT hyphens/slug format (`conor-mcgregor`). Slug-format queries return `fighters` but empty `bouts`. The `events` array is typically empty — use `get_upcoming_events` instead.
+**Search** (`/ufc/search?q=`): returns `{ data: { fighters: [...], bouts: [...], events: [...] } }`. IMPORTANT: The `bouts` array only returns data when the query uses **spaces** (e.g., `conor mcgregor`), NOT hyphens/slug format (`conor-mcgregor`). Slug-format queries return `fighters` but empty `bouts`. The `events` array returns matching events for event queries (e.g., `ufc 300`, `UFC 229`, `UFC`) with `slug`/`title`/`eventDate` — but is empty for fighter-name queries. Event queries need a **space or hyphen** (`ufc 300`, `ufc-300`), NOT `ufc300`. Use `get_upcoming_events` for the forward schedule.
+
+**Event bouts** (`/ufc/events/{slug}/bouts`): array of bouts with `fighters[]` (`outcome`, `corner`), `method`, `resultRound`/`resultTime`, `cardSection`, `weightClass`. Search bouts have the same shape plus a nested `event` summary.
 
 **Fighter-specific endpoints** (more reliable than search for individual fighters):
 - `GET /ufc/fighters/{slug}` — Profile, record, stats overview. Slug must be lowercase hyphenated (e.g., `conor-mcgregor`).
 - `GET /ufc/fighters/{slug}/stats` — Detailed career stats (striking accuracy, takedown defense, win methods).
 - `GET /ufc/fighters/{slug}/fights` — Complete fight history (all bouts, opponents, methods, results).
 
-**n8n chatbot tool usage**:
+**Chatbot tool usage** (see `api/chat.ts`):
 - `search_ufc` — Pass name with spaces (e.g., `conor mcgregor`) for discovery
 - `get_fighter` / `get_fighter_stats` / `get_fighter_fights` — Pass slug with hyphens (e.g., `conor-mcgregor`)
 - `get_rankings` / `get_upcoming_events` — No parameters needed
@@ -64,7 +75,8 @@ The Cito API wraps all responses in `{ success: true, data: ... }`. Key structur
 
 ## Project Structure
 ```
-api/                # Vercel serverless functions (CORS proxy to Cito API)
+api/                # Vercel serverless functions (CORS proxy to Cito API + chatbot)
+├── chat.ts         # POST /api/chat — Gemini agent chatbot
 ├── search.ts       # GET /api/search?q=...
 ├── fighters.ts     # GET /api/fighters?page=...&limit=...
 ├── fighters/
@@ -91,16 +103,18 @@ src/
 │   ├── layout/   # Navbar, Footer
 │   ├── fighters/ # FighterCard, FighterStats, SearchBar
 │   ├── fights/   # FightCard
+│   ├── events/   # EventCard, EventBoutRow
 │   └── comparison/ # ComparisonTable
-├── hooks/        # useFighter, useSearch, useRankings
-├── pages/        # Home, Search, FighterProfile, Rankings, Compare
+├── hooks/        # useFighter, useSearch, useRankings, useEvent
+├── pages/        # Home, Search, FighterProfile, EventDetail, Rankings, Compare
 └── types/        # TypeScript interfaces matching Cito API responses
 ```
 
 ## Routes
 - `/` — Home with search bar + quick links
-- `/search?q=` — Search results
+- `/search?q=` — Search results (fighters + events + bouts)
 - `/fighters/:slug` — Fighter profile with stats + fight history
+- `/events/:slug` — Event detail with fight card grouped by card section
 - `/rankings` — Division rankings (tab selector)
 - `/compare` — Side-by-side fighter comparison
 
