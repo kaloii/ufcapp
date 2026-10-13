@@ -64,8 +64,9 @@ type Rec = Record<string, unknown>;
 
 interface GeminiPart {
   text?: string;
-  functionCall?: { name: string; args?: Rec; thoughtSignature?: string };
+  functionCall?: { name: string; args?: Rec };
   functionResponse?: { name: string; response: Rec };
+  thoughtSignature?: string;
 }
 
 interface GeminiContent {
@@ -440,19 +441,7 @@ function sanitizeHistory(raw: unknown): GeminiContent[] {
   });
 }
 
-function stripThoughtSignatures(contents: GeminiContent[]): GeminiContent[] {
-  return contents.map((content) => ({
-    role: content.role,
-    parts: content.parts.map((part) => {
-      const fc = part.functionCall;
-      if (!fc) return part;
-      return { functionCall: { name: fc.name, args: fc.args } };
-    }),
-  }));
-}
-
 async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise<Rec> {
-  const bodyContents = model === GEMINI_MODEL ? contents : stripThoughtSignatures(contents);
   const res = await fetch(geminiUrl(model), {
     method: 'POST',
     headers: {
@@ -461,7 +450,7 @@ async function callGeminiOnce(model: string, contents: GeminiContent[]): Promise
     },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: bodyContents,
+      contents,
       tools: [{ functionDeclarations: TOOLS }],
       generationConfig: { maxOutputTokens: 1024 },
     }),
@@ -609,7 +598,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       contents.push({
         role: 'model',
-        parts: functionCalls.map((fc) => ({ functionCall: fc })),
+        parts: functionCalls.map((fc) => {
+          const part: GeminiPart = {
+            functionCall: { name: fc.name, args: fc.args },
+          };
+          if (fc.thoughtSignature) {
+            part.thoughtSignature = fc.thoughtSignature;
+          }
+          return part;
+        }),
       });
 
       const responseParts: GeminiPart[] = [];
