@@ -64,7 +64,7 @@ type Rec = Record<string, unknown>;
 
 interface GeminiPart {
   text?: string;
-  functionCall?: { name: string; args?: Rec };
+  functionCall?: { name: string; args?: Rec; thoughtSignature?: string };
   functionResponse?: { name: string; response: Rec };
 }
 
@@ -180,10 +180,20 @@ function normalizeSlug(v: unknown): string {
   return String(v ?? '').toLowerCase().trim().replace(/\s+/g, '-');
 }
 
-function asFunctionCall(part: Rec): { name: string; args: Rec } | null {
+function asFunctionCall(
+  part: Rec,
+): { name: string; args: Rec; thoughtSignature?: string } | null {
   const fc = part.functionCall;
   if (isRec(fc) && typeof fc.name === 'string') {
-    return { name: fc.name, args: isRec(fc.args) ? fc.args : {} };
+    const result: { name: string; args: Rec; thoughtSignature?: string } = {
+      name: fc.name,
+      args: isRec(fc.args) ? fc.args : {},
+    };
+    const sig = fc.thoughtSignature ?? part.thoughtSignature;
+    if (typeof sig === 'string' && sig) {
+      result.thoughtSignature = sig;
+    }
+    return result;
   }
   return null;
 }
@@ -461,27 +471,38 @@ async function callGeminiOnce(
       console.error(`Gemini API error (${model})`, res.status, errText.slice(0, 500));
       return {
         error: `Gemini API error (${res.status})`,
-        retriable: res.status === 503 || res.status === 404,
+        retriable: res.status === 503 || res.status === 404 || res.status === 400,
       };
     }
     return (await res.json()) as Rec;
   }
 }
 
+let primaryCooldownUntil = 0;
+
 async function callGemini(contents: GeminiContent[]): Promise<Rec> {
-  const primary = await callGeminiOnce(GEMINI_MODEL, contents);
-  if (!primary.error || primary.rateLimited) {
+  const hasFallback =
+    Boolean(GEMINI_MODEL_FALLBACK) && GEMINI_MODEL_FALLBACK !== GEMINI_MODEL;
+
+  if (Date.now() >= primaryCooldownUntil) {
+    const primary = await callGeminiOnce(GEMINI_MODEL, contents);
+    if (!primary.error || primary.rateLimited) {
+      return primary;
+    }
+    if (primary.retriable) {
+      primaryCooldownUntil = Date.now() + 60_000;
+      if (hasFallback) {
+        console.error(`Falling back to ${GEMINI_MODEL_FALLBACK}`);
+        return callGeminiOnce(GEMINI_MODEL_FALLBACK, contents);
+      }
+    }
     return primary;
   }
-  if (
-    primary.retriable &&
-    GEMINI_MODEL_FALLBACK &&
-    GEMINI_MODEL_FALLBACK !== GEMINI_MODEL
-  ) {
-    console.error(`Falling back to ${GEMINI_MODEL_FALLBACK}`);
+
+  if (hasFallback) {
     return callGeminiOnce(GEMINI_MODEL_FALLBACK, contents);
   }
-  return primary;
+  return callGeminiOnce(GEMINI_MODEL, contents);
 }
 
 const rateBuckets = new Map<string, number[]>();
@@ -556,7 +577,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const functionCalls = parts
         .map(asFunctionCall)
-        .filter((fc): fc is { name: string; args: Rec } => fc !== null);
+        .filter((fc): fc is { name: string; args: Rec; thoughtSignature?: string } => fc !== null);
       if (functionCalls.length === 0) {
         const text = parts
           .map((p) => str(p.text))
