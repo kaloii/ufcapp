@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json({ error: `Cito API error: ${response.statusText}` });
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { data?: unknown };
     return res.status(200).json(data.data || data);
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });

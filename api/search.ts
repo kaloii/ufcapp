@@ -25,12 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json({ error: `Cito API error: ${response.statusText}` });
     }
 
-    const data = await response.json();
-    const result = data.data || data;
+    const data = (await response.json()) as Record<string, unknown>;
+    const result = (data.data || data) as Record<string, unknown>;
     return res.status(200).json({
-      fighters: (result.fighters || []).slice(0, 5),
-      bouts: (result.bouts || []).slice(0, 5),
-      events: (result.events || []).slice(0, 5),
+      fighters: (Array.isArray(result.fighters) ? result.fighters : []).slice(0, 5),
+      bouts: (Array.isArray(result.bouts) ? result.bouts : []).slice(0, 5),
+      events: (Array.isArray(result.events) ? result.events : []).slice(0, 5),
     });
   } catch (err) {
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });

@@ -25,16 +25,15 @@ The generic `T` represents the **full response shape** from Cito, which is alway
 
 These run server-side and proxy requests to Cito API. The API key is stored in `process.env.CITO_API_KEY` (set in Vercel dashboard).
 
+⚠️ Vercel Hobby caps a deployment at **12 serverless functions** — `api/` is at **8**. Adding a 13th file builds green but the deploy fails at "Deploying outputs..." (no error in the build log).
+
 | File | Route | Cito Endpoint |
 |------|-------|---------------|
 | `api/search.ts` | `GET /api/search?q=...` | `/ufc/search?q=...` |
-| `api/fighters.ts` | `GET /api/fighters?page=...&limit=...` | `/ufc/fighters?page=...&limit=...` |
 | `api/fighters/[slug].ts` | `GET /api/fighters/:slug` | `/ufc/fighters/:slug` |
 | `api/fighters/[slug]/stats.ts` | `GET /api/fighters/:slug/stats` | `/ufc/fighters/:slug/stats` |
 | `api/fighters/[slug]/fights.ts` | `GET /api/fighters/:slug/fights` | `/ufc/fighters/:slug/fights` |
 | `api/rankings.ts` | `GET /api/rankings` | `/ufc/rankings` |
-| `api/events.ts` | `GET /api/events?page=...&limit=...` | `/ufc/events?page=...&limit=...` |
-| `api/events/upcoming.ts` | `GET /api/events/upcoming` | `/ufc/events/upcoming` |
 | `api/events/[id].ts` | `GET /api/events/:id` | `/ufc/events/:id` |
 | `api/events/[id]/bouts.ts` | `GET /api/events/:id/bouts` | `/ufc/events/:id/bouts` |
 
@@ -46,7 +45,6 @@ These run server-side and proxy requests to Cito API. The API key is stored in `
 | `getFighterBySlug(slug)` | `/api/fighters/{slug}` | `Fighter` | 24 h |
 | `getFighterStats(slug)` | `/api/fighters/{slug}/stats` | `FighterStats` | permanent |
 | `getFighterFights(slug)` | `/api/fighters/{slug}/fights` | `Fight[]` | permanent |
-| `getFighters()` | `/api/fighters?page=1&limit=200` | `Fighter[]` | 24 h |
 
 ### `src/api/search.ts` — Combined Search
 
@@ -56,8 +54,6 @@ These run server-side and proxy requests to Cito API. The API key is stored in `
 
 | Function | Endpoint | Returns | Cache TTL |
 |----------|----------|---------|-----------|
-| `getEvents(page, limit)` | `/api/events?page&limit` | `Event[]` | 12 h |
-| `getUpcomingEvents()` | `/api/events/upcoming` | `Event[]` | 12 h |
 | `getEventById(slug)` | `/api/events/{slug}` | `Event` | 12 h |
 | `getEventBouts(slug)` | `/api/events/{slug}/bouts` | `Bout[]` | 12 h |
 

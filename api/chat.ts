@@ -177,6 +177,14 @@ function normalizeSlug(v: unknown): string {
   return String(v ?? '').toLowerCase().trim().replace(/\s+/g, '-');
 }
 
+function asFunctionCall(part: Rec): { name: string; args: Rec } | null {
+  const fc = part.functionCall;
+  if (isRec(fc) && typeof fc.name === 'string') {
+    return { name: fc.name, args: isRec(fc.args) ? fc.args : {} };
+  }
+  return null;
+}
+
 async function citoGet(path: string): Promise<unknown> {
   const res = await fetch(`${CITO_BASE}${path}`, {
     headers: { 'x-api-key': CITO_API_KEY },
@@ -515,8 +523,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const content = candidate && isRec(candidate.content) ? candidate.content : null;
       const parts = content ? asArray(content.parts) : [];
 
-      const functionCallParts = parts.filter((p) => p.functionCall);
-      if (functionCallParts.length === 0) {
+      const functionCalls = parts
+        .map(asFunctionCall)
+        .filter((fc): fc is { name: string; args: Rec } => fc !== null);
+      if (functionCalls.length === 0) {
         const text = parts
           .map((p) => str(p.text))
           .filter((t): t is string => Boolean(t))
@@ -536,14 +546,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       contents.push({
         role: 'model',
-        parts: functionCallParts.map((p) => ({ functionCall: p.functionCall })),
+        parts: functionCalls.map((fc) => ({ functionCall: fc })),
       });
 
       const responseParts: GeminiPart[] = [];
-      for (const part of functionCallParts) {
-        const fc = part.functionCall;
-        if (!fc) continue;
-        const result = await runTool(fc.name, fc.args ?? {});
+      for (const fc of functionCalls) {
+        const result = await runTool(fc.name, fc.args);
         responseParts.push({
           functionResponse: {
             name: fc.name,

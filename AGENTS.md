@@ -21,6 +21,7 @@ Run `npm run build` to catch type errors and lint issues in one step. The build 
 - `erasableSyntaxOnly: true` — no `public`/`private` keywords in constructor parameters. Use explicit property declarations instead.
 - `verbatimModuleSyntax: true` — use `import type` for type-only imports.
 - `noUnusedLocals: true` / `noUnusedParameters: true` — unused code causes build failure.
+- `tsc -b` checks **three** projects: `tsconfig.app.json` (src), `tsconfig.node.json` (vite.config), `tsconfig.api.json` (api/, strict + Node types). Vercel type-checks `api/` at deploy time too — keep both green.
 
 ## API Keys
 - `CITO_API_KEY` — UFC data (free tier: 500 req/month). Get key from https://citoapi.com
@@ -74,27 +75,23 @@ The Cito API wraps all responses in `{ success: true, data: ... }`. Key structur
 - Search: 30min TTL
 
 ## Project Structure
+⚠️ **Vercel Hobby caps deployments at 12 serverless functions.** `api/` currently has **8**. A 13th file builds green but the deploy then fails at "Deploying outputs..." with no error in the build log (the reason is only visible in the Vercel dashboard). Always count files under `api/` before adding one.
+
 ```
-api/                # Vercel serverless functions (CORS proxy to Cito API + chatbot)
+api/                # Vercel serverless functions (CORS proxy to Cito API + chatbot) — 8/12
 ├── chat.ts         # POST /api/chat — Gemini agent chatbot
-├── search.ts       # GET /api/search?q=...
-├── fighters.ts     # GET /api/fighters?page=...&limit=...
+├── search.ts       # GET /api/search?q=... (fighters + bouts + events, 5 each)
+├── rankings.ts     # GET /api/rankings
 ├── fighters/
 │   ├── [slug].ts           # GET /api/fighters/:slug
 │   └── [slug]/
 │       ├── stats.ts        # GET /api/fighters/:slug/stats
 │       └── fights.ts       # GET /api/fighters/:slug/fights
-├── rankings.ts     # GET /api/rankings
-├── rankings/
-│   └── [division].ts       # GET /api/rankings/:division
-├── events.ts       # GET /api/events?page=...&limit=...
-├── events/
-│   ├── upcoming.ts         # GET /api/events/upcoming
-│   └── [id]/
-│       └── bouts.ts        # GET /api/events/:id/bouts
-└── bouts/
+└── events/
+    ├── [id].ts             # GET /api/events/:id
     └── [id]/
-        └── stats.ts        # GET /api/bouts/:id/stats
+        └── bouts.ts        # GET /api/events/:id/bouts
+```
 
 src/
 ├── api/          # Frontend API client (calls /api proxy, not Cito directly)

@@ -66,17 +66,3 @@ export async function getFighterFights(slug: string): Promise<Fight[]> {
   setCachedData(cacheKey, fights);
   return fights;
 }
-
-export async function getFighters(): Promise<Fighter[]> {
-  const cacheKey = 'fighters_all';
-  const cached = getCachedDataIfValid<Fighter[]>(
-    cacheKey,
-    CACHE_DURATIONS.FIGHTER_PROFILE,
-  );
-  if (cached) return cached;
-
-    const result = await apiFetch<{ data: Fighter[] }>(`/fighters?page=1&limit=200`);
-  const fighters = result.data || [];
-  setCachedData(cacheKey, fighters);
-  return fighters;
-}
